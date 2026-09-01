@@ -1,0 +1,86 @@
+# ~/.zshrc — computerstack
+# Cross-platform: works on Ubuntu now, macOS next year. Keep it that way.
+
+# ── homebrew (must come first: everything else lives in its prefix) ───────────
+if [[ -d /home/linuxbrew/.linuxbrew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+elif [[ -d /opt/homebrew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+# ── path ─────────────────────────────────────────────────────────────────────
+typeset -U path PATH                       # dedupe automatically
+path=(
+  "$HOME/.local/bin"
+  "$HOME/.cargo/bin"
+  "$HOME/bin"
+  $path
+)
+export PATH
+
+# ── history ──────────────────────────────────────────────────────────────────
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=100000
+SAVEHIST=100000
+setopt SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE
+setopt HIST_REDUCE_BLANKS EXTENDED_HISTORY INC_APPEND_HISTORY
+
+# ── behaviour ────────────────────────────────────────────────────────────────
+setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS
+setopt INTERACTIVE_COMMENTS NO_BEEP
+setopt GLOB_DOTS EXTENDED_GLOB
+
+# ── completion ───────────────────────────────────────────────────────────────
+autoload -Uz compinit
+# only rebuild the dump once a day — saves ~200ms per shell
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then compinit; else compinit -C; fi
+
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'   # case-insensitive
+zstyle ':completion:*' menu select
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*:descriptions' format '%F{blue}%d%f'
+
+# ── keybindings ──────────────────────────────────────────────────────────────
+bindkey -e                                  # emacs mode; ctrl-a / ctrl-e work
+bindkey '^[[A' history-search-backward
+bindkey '^[[B' history-search-forward
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+
+# ── environment ──────────────────────────────────────────────────────────────
+# VS Code when it's on PATH, nano as the fallback (git needs *something*)
+if command -v code >/dev/null 2>&1; then
+  export EDITOR="code --wait"
+else
+  export EDITOR=nano
+fi
+export VISUAL="$EDITOR"
+export PAGER=less LESS='-R -F -X'
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export XDG_CONFIG_HOME="$HOME/.config"
+export DEV="$HOME/dev"
+
+# ── tool init (order matters) ────────────────────────────────────────────────
+command -v mise     >/dev/null && eval "$(mise activate zsh)"
+command -v starship >/dev/null && eval "$(starship init zsh)"
+command -v zoxide   >/dev/null && eval "$(zoxide init zsh --cmd cd)"
+command -v atuin    >/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
+command -v fzf      >/dev/null && source <(fzf --zsh 2>/dev/null)
+
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_DEFAULT_OPTS='--height 45% --layout=reverse --border=rounded --info=inline'
+export FZF_CTRL_T_OPTS="--preview 'bat -n --color=always --line-range :300 {}'"
+
+# ── plugins (installed by brew) ──────────────────────────────────────────────
+for p in zsh-autosuggestions/zsh-autosuggestions.zsh \
+         zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+  [[ -f "$HOMEBREW_PREFIX/share/$p" ]] && source "$HOMEBREW_PREFIX/share/$p"
+done
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+# ── aliases & local overrides ────────────────────────────────────────────────
+[[ -f "$HOME/.config/zsh/aliases.zsh" ]] && source "$HOME/.config/zsh/aliases.zsh"
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"   # machine-specific, gitignored

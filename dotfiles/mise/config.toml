@@ -1,0 +1,18 @@
+# ~/.config/mise/config.toml — global runtime defaults
+# Per-project overrides go in a .mise.toml at the project root and win over these.
+
+[tools]
+python = "3.12"
+node   = "lts"
+go     = "latest"
+uv     = "latest"
+
+[settings]
+experimental = true
+idiomatic_version_file_enable_tools = ["python", "node"]  # respect .python-version / .nvmrc
+python.uv_venv_auto = true      # auto-activate .venv on cd — the direnv killer
+
+[env]
+DEV = "{{env.HOME}}/dev"
+PYTHONDONTWRITEBYTECODE = "1"
+PIP_REQUIRE_VIRTUALENV = "true"    # refuse to pip-install into system python

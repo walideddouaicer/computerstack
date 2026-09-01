@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# crew: open the agent workspace for a project.
+#
+#   crew                 # use the current directory
+#   crew myproject       # use ~/dev/myproject
+#
+# Layout:
+#
+#   ┌───────────────────────────┬──────────────────┐
+#   │                           │                  │
+#   │   TRUNK                   │   LEARN          │
+#   │   the project.            │   the branch.    │
+#   │   claude, already running │   /rune /scroll  │
+#   │                           │   /tome go here  │
+#   │                           ├──────────────────┤
+#   │                           │   WORKER         │
+#   │                           │   spare pane     │
+#   ├───────────────────────────┴──────────────────┤
+#   │   SHELL   (you: git, tests, docker)          │
+#   └──────────────────────────────────────────────┘
+#
+# TRUNK is the only pane that auto-starts claude. The others are plain shells;
+# run `claude` in them when you need them. Auto-starting three agents burns
+# tokens for nothing.
+#
+# LEARN exists so the branch has a physical home. Same folder as TRUNK, so it
+# reads the same CLAUDE.md and knows the project, but it is a separate
+# conversation, so asking questions there never fills up the trunk.
+
+set -euo pipefail
+
+PROJECT="${1:-}"
+if [[ -n "$PROJECT" && -d "${DEV:-$HOME/dev}/$PROJECT" ]]; then
+  DIR="${DEV:-$HOME/dev}/$PROJECT"
+else
+  DIR="$(pwd)"
+fi
+SESSION="$(basename "$DIR" | tr -c '[:alnum:]_-' '-' | sed 's/-*$//')"
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  echo "attaching to existing session: $SESSION"
+  exec tmux attach -t "$SESSION"
+fi
+
+tmux new-session -d -s "$SESSION" -c "$DIR" -n main
+
+# Capture pane IDs (%0, %1, ...) rather than indices (.1, .2, ...).
+# Indices depend on pane-base-index, which lives in tmux.conf. If that config
+# is not loaded, index-based targeting silently hits the wrong pane. IDs are
+# absolute and never shift.
+trunk=$(tmux display-message -p -t "$SESSION:main" '#{pane_id}')
+
+learn=$(tmux split-window -h -t "$trunk"  -c "$DIR" -l 40% -P -F '#{pane_id}')
+worker=$(tmux split-window -v -t "$learn" -c "$DIR" -l 50% -P -F '#{pane_id}')
+shellp=$(tmux split-window -v -t "$trunk" -c "$DIR" -l 25% -P -F '#{pane_id}')
+
+tmux select-pane -t "$trunk"  -T "TRUNK"
+tmux select-pane -t "$learn"  -T "LEARN  /rune /scroll /tome"
+tmux select-pane -t "$worker" -T "worker"
+tmux select-pane -t "$shellp" -T "shell"
+
+# second window: the lab. only auto-start lazydocker if docker is actually up.
+tmux new-window   -t "$SESSION" -n lab -c "$DIR"
+if docker info >/dev/null 2>&1; then
+  tmux send-keys  -t "$SESSION:lab" "lazydocker" C-m
+fi
+
+# third window: git
+tmux new-window   -t "$SESSION" -n git -c "$DIR"
+if command -v lazygit >/dev/null 2>&1; then
+  tmux send-keys  -t "$SESSION:git" "lazygit" C-m
+fi
+
+# start the trunk agent only. the rest stay idle until you need them.
+tmux select-window -t "$SESSION:main"
+tmux send-keys    -t "$trunk" "claude" C-m
+tmux select-pane  -t "$trunk"
+
+exec tmux attach -t "$SESSION"

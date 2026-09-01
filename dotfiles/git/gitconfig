@@ -1,0 +1,89 @@
+; ~/.gitconfig
+; Identity lives in ~/.gitconfig.local (gitignored) so this file is safe to publish.
+
+[include]
+    path = ~/.gitconfig.local
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = code --wait
+    pager = delta
+    autocrlf = input
+    excludesfile = ~/.gitignore_global
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    line-numbers = true
+    side-by-side = false
+    syntax-theme = Catppuccin-mocha
+    hyperlinks = true
+
+[merge]
+    conflictstyle = zdiff3
+    tool = vscode
+
+[mergetool "vscode"]
+    cmd = code --wait $MERGED
+
+[diff]
+    algorithm = histogram
+    colorMoved = default
+    renames = copies
+
+[pull]
+    rebase = true
+
+[push]
+    default = current
+    autoSetupRemote = true
+    followTags = true
+
+[fetch]
+    prune = true
+    pruneTags = true
+
+[rebase]
+    autoStash = true
+    autoSquash = true
+    updateRefs = true
+
+[rerere]
+    enabled = true          ; remember conflict resolutions — huge with parallel agents
+
+[branch]
+    sort = -committerdate
+
+[commit]
+    verbose = true
+
+[status]
+    showUntrackedFiles = all
+
+[help]
+    autocorrect = prompt
+
+[alias]
+    st = status -sb
+    co = checkout
+    sw = switch
+    br = branch
+    ci = commit
+    unstage = restore --staged
+    last = log -1 HEAD --stat
+    lg = log --oneline --graph --decorate -20
+    lga = log --oneline --graph --decorate --all
+    amend = commit --amend --no-edit
+    undo = reset --soft HEAD~1
+    wip = !git add -A && git commit -m "wip"
+    nuke = !git reset --hard && git clean -fd
+    ; what changed on this branch vs main
+    review = !git diff main...HEAD
+    ; who owns this file
+    who = shortlog -sn --
+    ; list worktrees compactly (parallel agent sessions)
+    wt = worktree list

@@ -1,0 +1,43 @@
+# rename to .gitignore
+
+# data: too big for git. keep raw/ backed up somewhere else.
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+
+# models
+models/*
+!models/.gitkeep
+mlruns/
+mlartifacts/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# notebooks
+.ipynb_checkpoints/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+credentials.json
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/
+
+# personal learning notes from /tome
+learning/

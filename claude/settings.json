@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git branch:*)",
+      "Bash(git switch:*)",
+      "Bash(git worktree:*)",
+      "Bash(ls:*)", "Bash(eza:*)", "Bash(cat:*)", "Bash(bat:*)",
+      "Bash(rg:*)", "Bash(fd:*)", "Bash(jq:*)", "Bash(tree:*)",
+      "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(pwd:*)",
+      "Bash(mkdir:*)", "Bash(cp:*)", "Bash(mv:*)",
+      "Bash(uv init:*)", "Bash(uv run:*)", "Bash(uv sync:*)", "Bash(uv add:*)",
+      "Bash(pytest:*)", "Bash(ruff:*)",
+      "Bash(npm run:*)", "Bash(npm install:*)", "Bash(npm list:*)",
+      "Bash(npx:*)", "Bash(node:*)", "Bash(pnpm:*)",
+      "Bash(lavish-axi:*)",
+      "Bash(docker ps:*)", "Bash(docker compose logs:*)", "Bash(docker compose ps:*)",
+      "Bash(duckdb:*)",
+      "Bash(mise:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(docker compose down:*)",
+      "Bash(uv pip install:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(rm -rf /*)",
+      "Bash(docker system prune:*)",
+      "Bash(sudo:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/id_rsa*)",
+      "Read(**/credentials.json)"
+    ]
+  },
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; [ -n \"$f\" ] && case \"$f\" in *.py) ruff format \"$f\" >/dev/null 2>&1; ruff check --fix \"$f\" >/dev/null 2>&1 ;; *.sh) shfmt -w -i 2 \"$f\" >/dev/null 2>&1 ;; *.json|*.md|*.yaml|*.yml) command -v prettier >/dev/null && prettier --write \"$f\" >/dev/null 2>&1 ;; esac; }; exit 0"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // empty'); case \"$cmd\" in *'.env'*|*'AWS_SECRET'*|*'API_KEY='*) echo 'blocked: command references a secret' >&2; exit 2 ;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v notify-send >/dev/null && notify-send 'Claude' 'session idle' 2>/dev/null; printf '\\a'; exit 0"
+          }
+        ]
+      }
+    ]
+  },
+
+  "env": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PIP_REQUIRE_VIRTUALENV": "true"
+  },
+
+  "includeCoAuthoredBy": false,
+  "cleanupPeriodDays": 30
+}

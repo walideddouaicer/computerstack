@@ -1,0 +1,21 @@
+# design-agent is its own git repo with its own GitHub remote.
+# bootstrap clones it into place. Tracking it here would nest a repo in a repo.
+claude/skills/design-agent/
+
+# machine-specific, never committed
+.zshrc.local
+.gitconfig.local
+*.bak.*
+
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+credentials.json
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
