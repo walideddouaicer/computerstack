@@ -258,7 +258,9 @@ if phase_enabled claude; then
   fi
 
   run mkdir -p "$HOME/.claude"
-  for item in CLAUDE.md how-i-learn.md settings.json agents commands skills; do
+
+  # Top-level files: link directly.
+  for item in CLAUDE.md how-i-learn.md settings.json; do
     src="$REPO_DIR/claude/$item"
     dst="$HOME/.claude/$item"
     [[ -e "$src" ]] || continue
@@ -266,6 +268,35 @@ if phase_enabled claude; then
     elif [[ -e "$dst" ]]; then run mv "$dst" "$dst.bak.$(date +%s)"; fi
     run ln -s "$src" "$dst"
     ok "linked ~/.claude/$item"
+  done
+
+  # skills / commands / agents: link the CONTENTS, never the directory itself.
+  #
+  # Omarchy drops its own skill into ~/.claude/skills. If that path were a symlink
+  # to this repo, Omarchy's file would land inside our git tree, or fail. Linking
+  # per-item means both sets coexist and neither owns the parent directory.
+  #
+  # Trade-off: a newly added skill does not appear until you re-run
+  #   bootstrap.sh --only claude
+  for group in agents commands skills; do
+    [[ -d "$REPO_DIR/claude/$group" ]] || continue
+    run mkdir -p "$HOME/.claude/$group"
+
+    # a directory left over from the old whole-directory symlink
+    if [[ -L "$HOME/.claude/$group" ]]; then
+      run rm "$HOME/.claude/$group"
+      run mkdir -p "$HOME/.claude/$group"
+      warn "replaced the old whole-directory symlink for $group"
+    fi
+
+    for src in "$REPO_DIR/claude/$group"/*; do
+      [[ -e "$src" ]] || continue
+      dst="$HOME/.claude/$group/$(basename "$src")"
+      if [[ -L "$dst" ]]; then run rm "$dst"
+      elif [[ -e "$dst" ]]; then run mv "$dst" "$dst.bak.$(date +%s)"; fi
+      run ln -s "$src" "$dst"
+    done
+    ok "linked $(find "$REPO_DIR/claude/$group" -maxdepth 1 -mindepth 1 | wc -l) item(s) into ~/.claude/$group"
   done
 fi
 

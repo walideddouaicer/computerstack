@@ -4,7 +4,7 @@
 #   powershell -ExecutionPolicy Bypass -File bootstrap\windows-link.ps1 -DryRun
 #
 # This is the Windows stand-in for what bootstrap.sh does on Ubuntu.
-# Symlinks mean there's no sync step — you edit the repo, Claude Code sees it instantly.
+# Symlinks mean there's no sync step , you edit the repo, Claude Code sees it instantly.
 #
 # Symlinks need EITHER Developer Mode on (Settings > System > For developers)
 # OR an Administrator PowerShell. If both fail, pass -Copy to fall back to copying.
@@ -47,20 +47,9 @@ if (Test-Path (Join-Path $DesignAgent ".git")) {
     Write-Host "  git not found, skipping design-agent" -ForegroundColor Yellow
 }
 
-$items = @("CLAUDE.md", "how-i-learn.md", "settings.json", "agents", "commands", "skills")
+function Link-One($src, $dst, $label) {
+    if ($DryRun) { Write-Host "  would link $label"; return }
 
-foreach ($item in $items) {
-    $src = Join-Path $RepoClaude $item
-    $dst = Join-Path $TargetRoot $item
-
-    if (-not (Test-Path $src)) { continue }
-
-    if ($DryRun) {
-        Write-Host "  would link $item"
-        continue
-    }
-
-    # back up anything real that's already there
     if (Test-Path $dst) {
         $existing = Get-Item $dst -Force
         if ($existing.LinkType) {
@@ -68,23 +57,52 @@ foreach ($item in $items) {
         } else {
             $backup = "$dst.bak.$(Get-Date -Format 'yyyyMMddHHmmss')"
             Move-Item $dst $backup
-            Write-Host "  backed up existing $item -> $(Split-Path $backup -Leaf)" -ForegroundColor Yellow
+            Write-Host "  backed up existing $label" -ForegroundColor Yellow
         }
     }
 
     if ($Copy) {
         Copy-Item $src $dst -Recurse -Force
-        Write-Host "  copied $item" -ForegroundColor Green
-    } else {
-        try {
-            New-Item -ItemType SymbolicLink -Path $dst -Target $src -Force | Out-Null
-            Write-Host "  linked $item" -ForegroundColor Green
-        } catch {
-            Write-Host "  symlink failed for $item — falling back to copy" -ForegroundColor Yellow
-            Write-Host "  (turn on Developer Mode to get real links)" -ForegroundColor DarkGray
-            Copy-Item $src $dst -Recurse -Force
-            Write-Host "  copied $item" -ForegroundColor Green
-        }
+        Write-Host "  copied $label" -ForegroundColor Green
+        return
+    }
+    try {
+        New-Item -ItemType SymbolicLink -Path $dst -Target $src -Force | Out-Null
+        Write-Host "  linked $label" -ForegroundColor Green
+    } catch {
+        Write-Host "  symlink failed for $label, falling back to copy" -ForegroundColor Yellow
+        Write-Host "  (turn on Developer Mode to get real links)" -ForegroundColor DarkGray
+        Copy-Item $src $dst -Recurse -Force
+        Write-Host "  copied $label" -ForegroundColor Green
+    }
+}
+
+# Top-level files
+foreach ($item in @("CLAUDE.md", "how-i-learn.md", "settings.json")) {
+    $src = Join-Path $RepoClaude $item
+    if (Test-Path $src) { Link-One $src (Join-Path $TargetRoot $item) $item }
+}
+
+# skills / commands / agents: link the CONTENTS, never the directory itself.
+# Other tools drop their own files into these folders (Omarchy installs a skill
+# into ~/.claude/skills). If the folder were a symlink into this repo, their
+# files would land inside our git tree, or fail outright.
+# Trade-off: re-run this script after adding a new skill.
+foreach ($group in @("agents", "commands", "skills")) {
+    $groupSrc = Join-Path $RepoClaude $group
+    if (-not (Test-Path $groupSrc)) { continue }
+
+    $groupDst = Join-Path $TargetRoot $group
+    if ((Test-Path $groupDst) -and (Get-Item $groupDst -Force).LinkType) {
+        if (-not $DryRun) { Remove-Item $groupDst -Force -Recurse }
+        Write-Host "  replaced the old whole-directory symlink for $group" -ForegroundColor Yellow
+    }
+    if (-not $DryRun -and -not (Test-Path $groupDst)) {
+        New-Item -ItemType Directory -Path $groupDst -Force | Out-Null
+    }
+
+    foreach ($child in Get-ChildItem $groupSrc) {
+        Link-One $child.FullName (Join-Path $groupDst $child.Name) "$group\$($child.Name)"
     }
 }
 

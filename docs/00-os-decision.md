@@ -1,6 +1,11 @@
-# ADR-000: Host OS, native Linux dual-boot (decided)
+# ADR-000: Host OS, native Linux dual-boot
 
-**Status:** Decided
+> **SUPERSEDED by [ADR-001](01-omarchy-decision.md), 2026-09-04.**
+> The MacBook is off, so the premise this rested on is gone. Omarchy now owns
+> layers 0 and 1. Kept because the reasoning about WSL2 and about distro choice
+> still holds, and because a decision log you delete from is not a log.
+
+**Status:** Superseded
 **Date:** 2026-08-11
 **Context:** ThinkPad laptop, blank slate, MacBook planned in ~1 year, high tolerance for breakage, willing to dual-boot.
 

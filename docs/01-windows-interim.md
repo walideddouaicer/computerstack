@@ -2,7 +2,7 @@
 
 The point of this phase: **use the agent layer for real, so it gets shaped by actual
 friction instead of our guesses.** Everything here is 100% portable, none of the effort
-is lost when you move to Ubuntu.
+is lost when you move to Omarchy.
 
 ## What works on Windows right now
 
@@ -12,28 +12,20 @@ is lost when you move to Ubuntu.
 | **`~/.claude`**, CLAUDE.md, skills, commands, agents | ✅ identical behaviour |
 | **uv** | ✅ full workflow: `uv init`, `uv add`, `uv run` |
 | **DuckDB** | ✅ |
-| **WezTerm** | ✅ if you want to try the config early |
-| tmux | ❌ Ubuntu |
-| `bootstrap.sh` | ❌ Ubuntu |
-| Native Docker | ❌ Ubuntu (Docker Desktop works, but with the VM tax) |
+| WezTerm | ⚠️ runs on Windows, but Omarchy ships its own terminal, so skip it |
+| tmux | ❌ Omarchy |
+| `bootstrap.sh` | ❌ Omarchy |
+| Native Docker | ❌ Omarchy (Docker Desktop works, but with the VM tax) |
 
 ---
 
 ## Setup, in order
 
-### 0. Make computerstack a git repo
+### 0. Git repo, done
 
-It is not one yet. Everything downstream assumes it is: the `.gitignore` that stops
-design-agent nesting, and the clone-onto-the-MacBook plan. Do this first.
-
-```powershell
-cd $env:USERPROFILE\Desktop\computerstack
-git init
-git add -A ; git commit -m "computerstack"
-gh repo create computerstack --private --source=. --push
-```
-
-Private. It holds your standing orders and your working habits.
+`computerstack` is a private repo at `github.com/walideddouaicer/computerstack`, tagged
+`v1.0`. Nothing to do here. Everything below assumes it, so it is worth knowing it is
+already true.
 
 ### 1. Git for Windows
 
@@ -119,7 +111,7 @@ anything either of us could design up front.
 
 **Paths.** Skills and commands here use Unix paths like `~/dev/project`. On Windows,
 Git Bash understands `~`, but PowerShell doesn't. If a skill misbehaves, that's usually
-why. It resolves itself on Ubuntu, don't rewrite the skills to be Windows-shaped, or
+why. It resolves itself on Omarchy, don't rewrite the skills to be Windows-shaped, or
 you'll just have to undo it.
 
 **`~/dev` doesn't exist yet.** Create it so projects land in the right place and the
@@ -131,7 +123,7 @@ mkdir $env:USERPROFILE\dev
 
 ---
 
-## When you switch to Ubuntu
+## When you switch to Omarchy
 
 ```bash
 git clone <repo> ~/dev/computerstack
@@ -139,4 +131,10 @@ cd ~/dev/computerstack
 bash bootstrap/bootstrap.sh
 ```
 
-Your CLAUDE.md, skills, commands, and agents come across exactly as they are, already broken in. The only things you'll be learning fresh are tmux and native Docker.
+Your CLAUDE.md, skills, commands, and agents come across exactly as they are, already
+broken in. The only things you'll be learning fresh are Omarchy itself, tmux, and native
+Docker.
+
+The `system`, `brew` and `cli` phases of `bootstrap.sh` still assume `apt` and will need
+rewriting for Arch. The `claude` phase, the one that carries everything you built during
+this Windows period, is OS-independent and already works.

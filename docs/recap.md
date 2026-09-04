@@ -18,30 +18,36 @@ pretty terminal in the video was a side effect of this, not the cause.
    │          │                │               │              │
   L0 OS    L1 TERMINAL     L2 PYTHON      L3 FOLDERS      L4 AGENTS
    │          │                │               │              │
- ubuntu    wezterm  window   mise  version   ~/dev        CLAUDE.md  always
- dual      tmux     panes    uv    libs      ~/.config    skills     when relevant
- boot      zsh      prompt                   ~/.claude    commands   when typed
+ omarchy   omarchy  shell    mise  version   ~/dev        CLAUDE.md  always
+ arch +    tmux     panes    uv    libs      ~/.config    skills     when relevant
+ hyprland                                    ~/.claude    commands   when typed
                                                           agents     when delegated
+
+      L0 and L1 belong to Omarchy. L2, L3 and L4 are ours.
 
               DuckDB is not a layer. It is just a library.
 ```
 
 ---
 
-## L0, OS
+## L0 and L1, Omarchy
 
-**Ubuntu 24.04, dual-booted with Windows.** Chosen because you move to a MacBook next
-year. Linux and macOS share dotfiles, Homebrew, zsh and `~/.config`, so the setup
-transfers almost unchanged. WSL knowledge would not.
+**Omarchy owns the OS, the desktop, the terminal and the shell.** Arch plus Hyprland,
+curated and opinionated. It is someone else's computerstack for the bottom two layers,
+which is this repo's own principle applied by someone who got there first. Full
+reasoning and the known collision: [01-omarchy-decision.md](01-omarchy-decision.md).
 
-## L1, terminal
+**Windows first.** None of this changes the Windows phase, where everything in `claude/`
+behaves identically. [01-windows-interim.md](01-windows-interim.md).
 
-Three programs stacked:
+### What we keep from L1
+
+Three programs are stacked in any terminal:
 
 ```
-WEZTERM   the window        fonts, colours
-  TMUX    splits + memory   panes, and survives closing
-    ZSH   the prompt        runs what you type
+THE TERMINAL   the window        fonts, colours     ← Omarchy picks this
+  TMUX         splits + memory   panes, persists    ← ours, and the one that matters
+    THE SHELL  the prompt        runs what you type ← Omarchy picks this
 ```
 
 **tmux is the one that matters.** Work becomes a place that persists. Close the laptop,
@@ -66,7 +72,7 @@ uv    picks the LIBRARIES   (polars, duckdb...)
 | `pyproject.toml` | shopping list | "I need polars" |
 | `uv.lock` | **receipt** | "polars 1.12.0 plus 38 others, exactly" |
 
-The receipt is why it still works in six months and on the MacBook.
+The receipt is why it still works in six months, and on any other machine.
 
 **`uv run` means you never activate anything.** You cannot forget a step that does not
 exist, and it works inside scripts and agent commands where activation does not.
@@ -75,12 +81,12 @@ exist, and it works inside scripts and agent commands where activation does not.
 
 ```
 ~/dev/          YOUR PROJECTS       nothing else
-~/.config/      HOW TOOLS BEHAVE    wezterm, tmux, zsh
+~/.config/      HOW TOOLS BEHAVE    tmux, git, mise
 ~/.claude/      HOW AGENTS BEHAVE   CLAUDE.md, skills, commands, agents
 ```
 
 The last two are **shortcuts into one git repo**, `~/dev/computerstack`. Fix once, fixed
-everywhere, in git, and it clones onto the MacBook.
+everywhere, in git, and it reproduces on any machine from a clone.
 
 Every project, in any language, has the same skeleton:
 
@@ -146,6 +152,8 @@ commands/
   /rune    6 sentences, ~30 seconds        learning
   /scroll  300 to 500 words                learning
   /tome    no limit, writes a file         learning
+  /log     write a decision into the project's CLAUDE.md
+  /catchup you have been away, where were you
   /ship    lint, test, review, commit
   /explore map an unfamiliar codebase
   /profile profile a dataset
@@ -242,6 +250,7 @@ claude                      # start
 | | Why |
 |---|---|
 | Neovim | Optimises the 10% |
+| WezTerm, zsh, starship configs | Superseded by Omarchy. Kept until it is actually installed. |
 | Spark | DuckDB covers everything you will hit |
 | MinIO | Fakes S3. Useful at a company, not yet. |
 | Dagster / Airflow | Schedules pipelines you do not have |
