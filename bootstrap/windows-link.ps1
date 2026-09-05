@@ -4,7 +4,7 @@
 #   powershell -ExecutionPolicy Bypass -File bootstrap\windows-link.ps1 -DryRun
 #
 # This is the Windows stand-in for what bootstrap.sh does on Ubuntu.
-# Symlinks mean there's no sync step , you edit the repo, Claude Code sees it instantly.
+# Symlinks mean there is no sync step: you edit the repo, Claude Code sees it instantly.
 #
 # Symlinks need EITHER Developer Mode on (Settings > System > For developers)
 # OR an Administrator PowerShell. If both fail, pass -Copy to fall back to copying.
@@ -31,6 +31,30 @@ Write-Host ""
 if (-not (Test-Path $TargetRoot)) {
     if (-not $DryRun) { New-Item -ItemType Directory -Path $TargetRoot -Force | Out-Null }
     Write-Host "  created $TargetRoot" -ForegroundColor Green
+}
+
+# Check ONCE whether symlinks are possible, before touching anything.
+# The old behaviour degraded to a copy per file and printed the same warning
+# 17 times, which reads like 17 problems instead of one setting.
+if (-not $Copy) {
+    $probe = Join-Path $env:TEMP "cs-symlink-probe-$(Get-Random)"
+    try {
+        New-Item -ItemType SymbolicLink -Path $probe -Target $RepoClaude -ErrorAction Stop | Out-Null
+        Remove-Item $probe -Force
+    } catch {
+        Write-Host "  Symlinks are not available, so this would COPY every file instead." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  Copies mean editing the repo does NOT update what Claude Code reads." -ForegroundColor Yellow
+        Write-Host "  You would have to re-run this script after every change." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  Fix it once:  Settings > System > For developers > Developer Mode: On" -ForegroundColor Cyan
+        Write-Host "  Then open a new terminal and run this again." -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  Or, to copy anyway and accept the re-run step:" -ForegroundColor DarkGray
+        Write-Host "     powershell -ExecutionPolicy Bypass -File bootstrap\windows-link.ps1 -Copy" -ForegroundColor DarkGray
+        Write-Host ""
+        exit 1
+    }
 }
 
 # design-agent is its own repo and is gitignored here, so a fresh clone won't have it
