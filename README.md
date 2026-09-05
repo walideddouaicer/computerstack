@@ -66,9 +66,12 @@ The plan is Windows first, deliberately:
 | **2** | `bootstrap.sh --only claude`, then use it on the taxi data | |
 | **3** | Rewrite the apt phases of bootstrap for pacman | |
 
-Guide: **[docs/03-omarchy-install.md](docs/03-omarchy-install.md)**. Checked against your
-actual disk. BitLocker is off, which removes the one hazard that could have locked you
-out of Windows.
+**During the install, read [docs/04-install-runbook.md](docs/04-install-runbook.md) from
+your phone.** Every step has a STOP condition. If something breaks, paste
+[docs/05-emergency-handoff.md](docs/05-emergency-handoff.md) into a fresh Claude session.
+
+Background: [docs/03-omarchy-install.md](docs/03-omarchy-install.md). BitLocker is off,
+which removes the one hazard that could have locked you out of Windows.
 
 Phase 2 is not padding. It is the phase that tells you which parts of the agent layer are
 real, and it will not match what either of us guessed. Changing the OS underneath before
@@ -88,7 +91,9 @@ computerstack/
 │   ├── 00-os-decision.md         superseded, kept for the reasoning
 │   ├── 01-omarchy-decision.md    what Omarchy takes over, and why
 │   ├── 01-windows-interim.md     running it on Windows, before the switch
-│   ├── 03-omarchy-install.md     the dual-boot, step by step. read from your phone.
+│   ├── 03-omarchy-install.md     the dual-boot, step by step
+│   ├── 04-install-runbook.md     ** READ FROM YOUR PHONE DURING THE INSTALL **
+│   ├── 05-emergency-handoff.md   paste into a fresh Claude if it goes wrong
 │   └── 02-data.md                duckdb, parquet, scale, databases
 │
 ├── bootstrap/
